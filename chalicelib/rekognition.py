@@ -17,6 +17,33 @@ class RekognitonClient(object):
         )
         return [label['Name'] for label in response['Labels']]
 
+    def get_image_emotions(self, bucket, key):
+        response = self._boto3_client.detect_faces(
+            Image={
+                'S3Object': {
+                    'Bucket': bucket,
+                    'Name': key
+                }
+            },
+            Attributes=[
+                'ALL'
+            ]
+        )
+
+        emotions = []
+
+        for face in response['FaceDetails']:
+            maxEmo = ''
+            maxConfi = 0
+            for emotion in face['Emotions']:
+                if maxConfi < emotion['Confidence']:
+                    maxEmo = emotion['Type']
+                    maxConfi = emotion['Confidence']
+
+            emotions.append(maxEmo)
+
+        return emotions
+
     def start_video_label_job(self, bucket, key, topic_arn, role_arn):
         response = self._boto3_client.start_label_detection(
             Video={
