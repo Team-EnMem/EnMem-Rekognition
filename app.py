@@ -67,6 +67,16 @@ def add_video_file(event):
         labels=labels)
 
 
+@app.on_sns_message(topic=os.environ['VIDEO_TOPIC_FACE_NAME'])
+def add_video_file_face(event):
+    message = json.loads(event.message)
+    labels = get_rekognition_client().get_video_job_faces(message['JobId'])
+    get_media_db().add_media_file(
+        name=message['Video']['S3ObjectName'],
+        media_type=db.VIDEO_TYPE,
+        labels=labels)
+
+
 @app.route('/',cors=True)
 def list_media_files():
     params = {}
@@ -113,5 +123,10 @@ def _is_video(key):
 def _handle_created_video(bucket, key):
     get_rekognition_client().start_video_label_job(
         bucket=bucket, key=key, topic_arn=os.environ['VIDEO_TOPIC_ARN'],
+        role_arn=os.environ['VIDEO_ROLE_ARN']
+    )
+    get_rekognition_client().start_video_face_job(
+        bucket=bucket, key=key,
+        topic_arn=os.environ['VIDEO_TOPIC_FACE_ARN'],
         role_arn=os.environ['VIDEO_ROLE_ARN']
     )

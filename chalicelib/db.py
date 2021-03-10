@@ -46,13 +46,32 @@ class DynamoMediaDB(MediaDB):
     def add_media_file(self, name, media_type, labels=None):
         if labels is None:
             labels = []
-        self._table.put_item(
-            Item={
+
+        response = self._table.get_item(
+            Key={
                 'name': name,
-                'type': media_type,
-                'labels': labels,
-            }
+            },
         )
+
+        if response.get('Item') is None:
+            self._table.put_item(
+                Item={
+                    'name': name,
+                    'type': media_type,
+                    'labels': labels,
+                }
+            )
+
+        else:
+            self._table.update_item(
+                Key={
+                    'name': name,
+                },
+                UpdateExpression="SET labels = list_append(labels, :val1)",
+                ExpressionAttributeValues={
+                    ':val1': labels
+                }
+            )
 
     def get_media_file(self, name):
         response = self._table.get_item(
