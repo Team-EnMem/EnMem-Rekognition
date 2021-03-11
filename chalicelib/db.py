@@ -67,11 +67,43 @@ class DynamoMediaDB(MediaDB):
                 Key={
                     'name': name,
                 },
-                UpdateExpression="SET labels = list_append(labels, :val1)",
+                UpdateExpression="SET labels = :val1",
                 ExpressionAttributeValues={
                     ':val1': labels
                 }
             )
+            
+    def add_media_file_face(self, name, media_type, emotions=None):
+        if emotions is None:
+            emotions = []
+            
+        response = self._table.get_item(
+            Key={
+                'name': name,
+            },
+        )
+
+        if response.get('Item') is None:
+            self._table.put_item(
+                Item={
+                    'name': name,
+                    'type': media_type,
+                    'emotions': emotions,
+                }
+            )
+
+        else:
+            self._table.update_item(
+                Key={
+                    'name': name,
+                },
+                UpdateExpression="SET emotions = :val1",
+                ExpressionAttributeValues={
+                    ':val1': emotions
+                }
+            )    
+            
+            
 
     def get_media_file(self, name):
         response = self._table.get_item(
