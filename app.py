@@ -113,6 +113,13 @@ def _is_image(key):
 def _handle_created_image(bucket, key):
     labels = get_rekognition_client().get_image_labels(bucket=bucket, key=key)
     emotions = get_rekognition_client().get_image_emotions(bucket=bucket, key=key)
+    
+    # for removing prefix
+    if 'public/' in key:
+        index = key.find('public/') 
+        key = key[index+len('public/'):]
+
+    
     get_media_db().add_media_file(key, media_type=db.IMAGE_TYPE, labels=labels)
     get_media_db().add_media_file_face(key, media_type=db.IMAGE_TYPE, emotions=emotions)
 
